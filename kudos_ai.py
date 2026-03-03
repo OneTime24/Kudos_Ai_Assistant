@@ -1,3 +1,14 @@
+# ==============================
+# Kudos - Voice Controlled AI Assistant
+# ==============================
+# This script implements a voice-activated AI assistant using:
+# - Google Gemini API for AI responses
+# - SpeechRecognition for voice input
+# - pyttsx3 for text-to-speech output
+# - pygame for playing custom audio responses
+# - Web browser integration for search and YouTube playback
+# ==============================
+
 import os
 import google.generativeai as genai
 from colorama import Fore, Style
@@ -7,44 +18,67 @@ import webbrowser
 from youtubesearchpython import VideosSearch
 import pygame
 
-# Initialize pygame
+
+# ------------------------------
+# Initialize audio mixer (used for playing MP3 responses)
+# ------------------------------
 pygame.mixer.init()
 
-# Gemini API key
+
+# ------------------------------
+# Configure Gemini API
+# ------------------------------
+# NOTE: In production, API keys should be stored securely
+# using environment variables instead of hardcoding.
 genai.configure(api_key="AIzaSyC8DdamcmYru2GqJ3YhpGIgrl3Zi0BbPiE")
 
-# Model configuration
+
+# ------------------------------
+# AI Model Configuration
+# ------------------------------
 generation_config = {
-    "temperature": 1,
-    "top_p": 0.95,
-    "top_k": 64,
-    "max_output_tokens": 8192,
+    "temperature": 1,              # Controls randomness of responses
+    "top_p": 0.95,                 # Nucleus sampling
+    "top_k": 64,                   # Limits token selection pool
+    "max_output_tokens": 8192,     # Maximum length of response
     "response_mime_type": "text/plain",
 }
 
+
+# Initialize Gemini model
 model = genai.GenerativeModel(
     model_name="gemini-1.5-flash",
     generation_config=generation_config,
 )
 
-# Start a chat session
+# Start a persistent chat session
 chat_session = model.start_chat(history=[])
 
+
+# ------------------------------
+# User Interface Messages
+# ------------------------------
 print(Fore.CYAN + "Welcome to Kudos: your AI Assistant!")
 print(Fore.YELLOW + "Say 'Kudos' to activate me and 'exit' to end the conversation." + Style.RESET_ALL)
 
-# Initialize text-to-speech engine
+
+# ------------------------------
+# Text-To-Speech (TTS) Setup
+# ------------------------------
 engine = pyttsx3.init()
 
-# Select a more human-like voice (change index if necessary)
 voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[1].id)  # Change the index to select a different voice
-engine.setProperty('rate', 170)  # Speed of speech
-engine.setProperty('volume', 1.0)  # Volume level (0.0 to 1.0)
+engine.setProperty('voice', voices[1].id)  # Select voice (index may vary by system)
+engine.setProperty('rate', 170)            # Speech speed
+engine.setProperty('volume', 1.0)          # Volume level (0.0 to 1.0)
 
-speaking = False  # Flag to track if AI is speaking
+speaking = False  # Tracks whether the assistant is currently speaking
 
-# Function to speak the response
+
+# ------------------------------
+# Speak Function
+# Converts text response to speech
+# ------------------------------
 def speak(text):
     global speaking
     speaking = True
@@ -52,47 +86,57 @@ def speak(text):
     engine.runAndWait()
     speaking = False
 
-# Initialize the speech recognizer
+
+# ------------------------------
+# Speech Recognition Setup
+# ------------------------------
 recognizer = sr.Recognizer()
 
-# Function to handle audio playback
+
+# ------------------------------
+# Audio Playback Function
+# Plays predefined MP3 responses
+# ------------------------------
 def play_audio(file_path):
     pygame.mixer.music.load(file_path)
     pygame.mixer.music.play()
 
-# Dictionary for specific questions and corresponding audio responses
+
+# ------------------------------
+# Predefined Audio Responses
+# Maps specific questions to local MP3 files
+# ------------------------------
 audio_responses = {
+    # English responses
     "how are you": "D:\\Work Space\\Programming\\PYTHON\\Project AI\\Assistant\\AI-PRED\\thank_you_for_asking.mp3",
     "what is your name": "D:\\Work Space\\Programming\\PYTHON\\Project AI\\Assistant\\AI-PRED\\I'm_kudos.mp3",
     "how is the weather": "D:\\Work Space\\Programming\\PYTHON\\Project AI\\Assistant\\AI-PRED\\how_is_the_weather.mp3",
-    "who created you":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\made_by.mp3",
-    "Aapka kya naam hai":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\mera_naam.mp3",
-    "Aapka kya name hai":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\mera_naam.mp3",
-    "Aapka kya naam hai":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\mera_naam.mp3",
-    "ap kya kr skte hein":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\ai_hon.mp3",
-    "pakistan ka matlab kya":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\la_illah.mp3",
-    "gilgit baltistan ke bare mein bataen":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\gb.mp3",
-    "gilgit baltistan ke bare mein batayein":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\gb.mp3",
-    "gilgit baltistan ke bare me bateyiye":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\gb.mp3",
-    "uswa ke barey me bataye":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\uswa_barey.mp3",
-    "uswa ke bare mein bataen":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\uswa_barey.mp3",
-    "uswa ke bare me bateyiye":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\uswa_barey.mp3",
-    "pakistan ke barey me bataye":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\pakistan.mp3",
-    "pakistan ke bare mein bataen":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\pakistan.mp3",
-    "pakistan ke bare me bateyiye":"D:\Work Space\Programming\PYTHON\Project AI\Assistant\AI-PRED\\pakistan.mp3"
-    # Add more questions and corresponding audio file paths here
+
+    # Urdu responses
+    "who created you":"D:\\Work Space\\Programming\\PYTHON\\Project AI\\Assistant\\AI-PRED\\made_by.mp3",
+    "aapka kya naam hai":"D:\\Work Space\\Programming\\PYTHON\\Project AI\\Assistant\\AI-PRED\\mera_naam.mp3",
+    "pakistan ka matlab kya":"D:\\Work Space\\Programming\\PYTHON\\Project AI\\Assistant\\AI-PRED\\la_illah.mp3",
+    "gilgit baltistan ke bare mein bataen":"D:\\Work Space\\Programming\\PYTHON\\Project AI\\Assistant\\AI-PRED\\gb.mp3",
+    "uswa ke bare mein bataen":"D:\\Work Space\\Programming\\PYTHON\\Project AI\\Assistant\\AI-PRED\\uswa_barey.mp3",
+    "pakistan ke bare mein bataen":"D:\\Work Space\\Programming\\PYTHON\\Project AI\\Assistant\\AI-PRED\\pakistan.mp3"
 }
 
-# Function to handle specific questions
+
+# ------------------------------
+# Checks if question matches predefined responses
+# ------------------------------
 def handle_specific_questions(question):
     question_lower = question.lower()
     if question_lower in audio_responses:
-        play_audio(audio_responses[question_lower])  # Play the corresponding audio file
+        play_audio(audio_responses[question_lower])
         print(Fore.GREEN + f"Playing response for '{question_lower}'" + Style.RESET_ALL)
         return True
     return False
 
-# Function to handle website opening
+
+# ------------------------------
+# Opens a website in browser
+# ------------------------------
 def open_website(site_name):
     if not site_name.startswith("http://") and not site_name.startswith("https://"):
         site_name = site_name.replace(" ", "")
@@ -100,7 +144,10 @@ def open_website(site_name):
     webbrowser.open(site_name)
     return True
 
-# Function to handle Google searches
+
+# ------------------------------
+# Performs a Google search
+# ------------------------------
 def search_google(query):
     search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
     webbrowser.open(search_url)
@@ -108,17 +155,24 @@ def search_google(query):
     speak(f"Searching Google for {query}")
     return True
 
-# Function to play a YouTube video directly
+
+# ------------------------------
+# Plays YouTube video based on search query
+# ------------------------------
 def play_youtube_video(query):
     videos_search = VideosSearch(query, limit=1)
     result = videos_search.result()["result"][0]
     video_url = result["link"]
+
     print(Fore.GREEN + f"Playing {query} on YouTube" + Style.RESET_ALL)
     speak(f"Playing {query} on YouTube")
     webbrowser.open(video_url)
     return True
 
-# Function to handle additional features
+
+# ------------------------------
+# Handles feature-based commands (open, play, search)
+# ------------------------------
 def respond_with_features(voice_data):
     voice_data_lower = voice_data.lower()
 
@@ -128,19 +182,23 @@ def respond_with_features(voice_data):
     if "open" in voice_data_lower:
         site_name = voice_data_lower.split("open")[-1].strip()
         if open_website(site_name):
-            print(Fore.GREEN + f"Opening {site_name}" + Style.RESET_ALL)
             speak(f"Opening {site_name}")
-            return True  
+            return True
+
     elif "play" in voice_data_lower:
         search_query = voice_data_lower.split("play")[-1].strip()
         return play_youtube_video(search_query)
+
     elif "search" in voice_data_lower:
         search_query = voice_data_lower.split("search")[-1].strip()
-        if search_google(search_query):
-            return True  
-    return False 
+        return search_google(search_query)
 
-# Function to listen for the "Kudos" keyword
+    return False
+
+
+# ------------------------------
+# Waits for activation keyword "Kudos"
+# ------------------------------
 def listen_for_kudos():
     while True:
         with sr.Microphone() as source:
@@ -151,16 +209,19 @@ def listen_for_kudos():
             try:
                 keyword = recognizer.recognize_google(audio)
                 if "kudos" in keyword.lower():
-                    print(Fore.GREEN + "'Kudos' detected! How can I assist you?" + Style.RESET_ALL)
+                    print(Fore.GREEN + "'Kudos' detected!" + Style.RESET_ALL)
                     speak("Yes, how can I assist you?")
-                    handle_conversation()  # Proceed to the main conversation loop
+                    handle_conversation()
 
             except sr.UnknownValueError:
-                continue  # Keep listening if no keyword is detected
+                continue
             except sr.RequestError as e:
-                print(Fore.RED + f"Could not request results from Google Speech Recognition service; {e}" + Style.RESET_ALL)
+                print(Fore.RED + f"Speech Recognition error: {e}" + Style.RESET_ALL)
 
-# Function to handle the conversation once activated
+
+# ------------------------------
+# Main conversation loop
+# ------------------------------
 def handle_conversation():
     while True:
         with sr.Microphone() as source:
@@ -173,41 +234,38 @@ def handle_conversation():
                 print(Fore.GREEN + "You: " + question + Style.RESET_ALL)
 
                 if question.lower() == "exit":
-                    print(Fore.CYAN + "Goodbye! Say 'Kudos' to activate me again." + Style.RESET_ALL)
                     speak("Goodbye!")
-                    break  # Exit the conversation loop and return to waiting for 'Kudos'
+                    break
 
-                # Check if the user wants to stop speaking
                 if "stop speaking" in question.lower() and speaking:
                     engine.stop()
-                    print(Fore.YELLOW + "Stopped speaking." + Style.RESET_ALL)
                     return
 
-                # Calling New Feature Function
+                # Feature handling first
                 if not respond_with_features(question):
+
+                    # AI-generated response
                     response = chat_session.send_message(question)
-                    response_text = response.text
+                    response_text = response.text.replace('*', '').replace('#', '')
 
-                    # Avoid special characters in the response
-                    response_text = response_text.replace('*', '').replace('#', '')
-
-                    # Provide a short response unless a long one is explicitly requested
+                    # Short vs Detailed response handling
                     if any(keyword in question.lower() for keyword in ["detailed", "long", "detail", "explain in detail"]):
-                        # Limit the response to a paragraph of 4-6 sentences
                         sentences = response_text.split(". ")
-                        detailed_response = ". ".join(sentences[:6]) + "."  # Get the first 6 sentences
-                        print("\n" + Fore.BLUE + "Kudos: " + detailed_response + Style.RESET_ALL + "\n")
+                        detailed_response = ". ".join(sentences[:6]) + "."
                         speak(detailed_response)
                     else:
                         short_response = response_text.split(". ")[0] + "."
-                        print("\n" + Fore.BLUE + "Kudos: " + short_response + Style.RESET_ALL + "\n")
                         speak(short_response)
 
             except sr.UnknownValueError:
-                print(Fore.RED + "Sorry, I could not understand the audio." + Style.RESET_ALL)
+                print(Fore.RED + "Could not understand audio." + Style.RESET_ALL)
             except sr.RequestError as e:
-                print(Fore.RED + f"Could not request results from Google Speech Recognition service; {e}" + Style.RESET_ALL)
+                print(Fore.RED + f"Speech Recognition error: {e}" + Style.RESET_ALL)
 
-# Main loop for interaction
+
+# ------------------------------
+# Program Entry Point
+# ------------------------------
+# Continuously listens for activation keyword
 while True:
-    listen_for_kudos()  # Wait for 'Kudos' keyword
+    listen_for_kudos()
